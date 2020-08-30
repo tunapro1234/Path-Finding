@@ -1,0 +1,7 @@
+{
+    "python.pythonPath": "C:\\Users\\tunag\\anaconda3\\python.exe",
+    "python.formatting.provider": "yapf",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "vscode.python",
+    "editor.cursorStyle": "block-outline"
+}
