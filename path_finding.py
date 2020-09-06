@@ -32,7 +32,7 @@ class Node:
         self.p_score = None
 
     def calc_node_h_score(self):
-        end_node_x, end_node_y = Board.end_node_pos
+        end_node_y, end_node_x = Board.end_node_pos
         # return (abs(end_node_x - self.x) ** 2 + abs(end_node_y - self.y) ** 2) ** (1/2)
         return ((end_node_x - self.x) ** 2 + (end_node_y - self.y) ** 2) ** (1/2)
 
@@ -41,7 +41,7 @@ class Node:
         # yapf: disable
         self.h_score = self.calc_node_h_score() if not self.h_score else self.h_score
         self.p_score = (self.prev.p_score + 1)
-        return self.h_score + (self.p_score / 3)
+        return (self.h_score * 2) + self.p_score
 
     @property
     def state(self):
@@ -236,7 +236,10 @@ def calc_next_gen(node_pos, board, update_func):
             # eğer aktif komşunun geçmişi yoksa önceki node olarak bize verilen nodeu ekle
             if neighbour.prev is None:
                 board.nodes[y][x].neighbors[index].prev = board.nodes[y][x]
+            
             # eğer geçmişi varsa skorları karşılaştır
+            elif (board.nodes[y][x].p_score+1) < (neighbour.score - (neighbour.h_score*2)):
+                board.nodes[y][x].neighbors[index].prev = board.nodes[y][x]
 
             # Sonsa çık
             if neighbour.state == "end":
