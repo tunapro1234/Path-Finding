@@ -2,6 +2,7 @@ import pygame
 import time
 
 WIDTH = HEIGHT = 400
+PIXEL_NUM = 20
 
 colors = {
     "RED": (255, 0, 0),
@@ -21,11 +22,26 @@ class Node:
             (Board.pixel_width - 1, Board.pixel_height - 1))
         self.x = x
         self.y = y
+
         self.prev = None
-        self.score = None
         self.color = None
         self.state = state
         self.neighbors = []
+
+        self.h_score = None
+        self.p_score = None
+
+    def calc_node_h_score(self):
+        end_node_x, end_node_y = Board.end_node_pos
+        # return (abs(end_node_x - self.x) ** 2 + abs(end_node_y - self.y) ** 2) ** (1/2)
+        return ((end_node_x - self.x) ** 2 + (end_node_y - self.y) ** 2) ** (1/2)
+
+    @property
+    def score(self):
+        # yapf: disable
+        self.h_score = self.calc_node_h_score() if not self.h_score else self.h_score
+        self.p_score = (self.prev.p_score + 1)
+        return self.h_score + (self.p_score / 3)
 
     @property
     def state(self):
@@ -74,6 +90,7 @@ class Node:
 
 class Board:
     pixel_height = pixel_width = pixel_num = None
+    start_node_pos = end_node_pos = None
 
     def __init__(self,
                  screen,
@@ -88,9 +105,6 @@ class Board:
         self.height = height
         self.width = width
         self.nodes = []
-
-        self.start_node = None
-        self.end_node = None
 
         Board.pixel_num = pixel_num = (
             pixel_num, pixel_num) if type(pixel_num) == int else pixel_num
@@ -133,9 +147,12 @@ class Board:
         for y in range(len(self.nodes)):
             for x in range(len(self.nodes[y])):
                 if self.nodes[y][x].state == "start":
-                    self.start_node = self.nodes[y][x]
+                    Board.start_node_pos = (y, x)
                 elif self.nodes[y][x].state == "end":
-                    self.end_node = self.nodes[y][x]
+                    Board.end_node_pos = (y, x)
+
+        # başlangıç nodunun skoru sıfırlanıyor
+        self.nodes[Board.start_node_pos[0]][Board.start_node_pos[1]].p_score = 0
 
     def calc_node_neighbors(self):
         self.set_special_nodes()
@@ -155,13 +172,7 @@ class Board:
                 if y != last_y and self.nodes[y + 1][x].state != "barrier":
                     self.nodes[y][x].neighbors.append(self.nodes[y + 1][x])
 
-    def calc_node_score(self, node):
-        return abs(self.end_node.x - node.x) + abs(self.end_node.y - node.y)
-
     def sort_by_score(self, nodes):
-        for i in range(len(nodes)):
-            nodes[i].score = self.calc_node_score(node)
-
         for i in range(len(nodes) - 1):
             for j in range(len(nodes) - i):
                 if len(nodes) > j + 1 and nodes[j].score > nodes[j + 1].score:
@@ -199,21 +210,15 @@ class Board:
 
 def algorithm(update_func, board):
     board.calc_node_neighbors()
-
-    # if board.end_node in (rv := calc_next_gen(board.start_node, board, update_func)):
-    #     return draw_node_path(rv[0], update_func)
-    # çok zaman kaybettirir
-    # next_nodes = []
-    # for y in range(len(board.nodes)):
-    #     # yapf: disable
-    #     next_nodes += [(x, y) for x in range(len(board.nodes[y])) if board.nodes[y][x].state == "next"]
-    next_nodes = [board.start_node]
+    next_nodes = [board.nodes[Board.start_node_pos[0]][Board.start_node_pos[1]]]
+    end_node_pointer = board.nodes[Board.end_node_pos[0]][Board.end_node_pos[1]]
 
     while True:
         # eğer bittiyse
-        if board.end_node in (rv := calc_next_gen(next_nodes[0], board, update_func)):
+        if end_node_pointer in (rv := calc_next_gen(next_nodes[0], board, update_func)):
             return draw_node_path(rv[0], update_func)
 
+        del next_nodes[0]
         next_nodes += rv
         next_nodes = board.sort_by_score(next_nodes)
 
@@ -222,27 +227,33 @@ def calc_next_gen(node_pos, board, update_func):
     x, y = node_pos if type(node_pos) == tuple else node_pos.x, node_pos.y
     # nodeun kendisi (start değilse) kapatılıyor
     board.nodes[y][x].state = "closed" if board.nodes[y][x].state != "start" else board.nodes[y][x].state
+    returning_nodes = []
     # nodun her bir komşusu için
     for index, neighbour in enumerate(board.nodes[y][x].neighbors):
         # yapf: disable
-        if neighbour.state not in ["closed", "start", "end"]:
-            # komşu sonraki eleman haline getiriliyor
-            board.nodes[y][x].neighbors[index].state = "next"
+
+        if neighbour.state not in ["closed", "start"]:
             # eğer aktif komşunun geçmişi yoksa önceki node olarak bize verilen nodeu ekle
             if neighbour.prev is None:
                 board.nodes[y][x].neighbors[index].prev = board.nodes[y][x]
             # eğer geçmişi varsa skorları karşılaştır
 
-        if neighbour.state == "end":
-            return [board.nodes[y][x]]
+            # Sonsa çık
+            if neighbour.state == "end":
+                return [neighbour]
+
+            # komşu sonraki eleman haline getiriliyor
+            board.nodes[y][x].neighbors[index].state = "next"
+            # next olanları döndürülecek listeye ekle
+            returning_nodes.append(board.nodes[y][x].neighbors[index])
 
         update_func()
-    return board.nodes[y][x].neighbors
+    return returning_nodes
 
 
 def draw_node_path(last_node, update_func):
     while last_node.prev is not None:
-        last_node.state = "finished"
+        last_node.state = "finished" if last_node.state not in ["end", "start"] else last_node.state
         update_func()
         last_node = last_node.prev
 
@@ -251,7 +262,7 @@ def main():
     pygame.display.init()
     pygame.display.set_caption("caption")
     screen = pygame.display.set_mode((WIDTH + 1, HEIGHT + 1))
-    board = Board(screen, WIDTH, HEIGHT, 40)
+    board = Board(screen, WIDTH, HEIGHT, PIXEL_NUM)
 
     start_pos = False
     end_pos = False
