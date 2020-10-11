@@ -1,3 +1,4 @@
+# from lib.board_cy import Board as Board_cy
 from lib.board import Board
 # from lib.node import Node
 from res.glob import *
@@ -14,6 +15,9 @@ def main():
     
     board = Board(screen, (WIDTH, HEIGHT), PIXEL_NUM, 
                   draw_grid=DRAW_GRID, map=MAP, animations=ANIMATIONS)
+    
+    # board = Board_cy(screen, (WIDTH, HEIGHT), PIXEL_NUM, 
+    #                  draw_grid=DRAW_GRID, map=MAP, animations=ANIMATIONS)
     
     isAlgorithmStarted = False
 
