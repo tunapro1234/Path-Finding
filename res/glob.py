@@ -1,12 +1,20 @@
-WIDTH = HEIGHT = 800
-PIXEL_NUM = 80
+WIDTH = HEIGHT = 600
+PIXEL_NUM = 60
 
 TITLE = "PATH FINDING"
 DRAW_GRID = False
-ANIMATIONS = 1
+# Animasyonların kapalı olması poerformansı uçuruyor
+ANIMATIONS = 0
 FPS = 500
-MAP = 0
 
+class maps:
+    blank = 0
+    zebra = 1
+    windows = 2
+    coolerWindows = 3
+    yourComputerWillCrash = 4
+    
+MAP = maps.yourComputerWillCrash
 class colors:
     red = (255, 0, 0)
     black = (0, 0, 0)

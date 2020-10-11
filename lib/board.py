@@ -58,17 +58,17 @@ class Board:
                 startPos = (x * self.pWidth, y * self.pHeight)
                 nodeState = 0
                 
-                if map == 1:
+                if map == maps.zebra:
                     nodeState = states.empty if y % 2 == 0 else states.wall
                 
-                elif map == 2:
+                elif map == maps.windows:
                     pLast = self.pNum-1
                     if (x+1) % 3 == 0 and y != pLast:
                         nodeState = states.empty
                     elif (y % 2 == 0 or y == pLast) and (x, y) not in [(0,0), (1,0), (pLast, pLast-1), (pLast-1, pLast-1)]:
                         nodeState = states.wall
 
-                elif map == 3:
+                elif map == maps.coolerWindows:
                     if (x+1) % 3 == 0:
                         nodeState = states.empty
                     elif y % 2 == 0:
@@ -77,6 +77,19 @@ class Board:
                     else:
                         if 0 in [(x + 3) % 6, (x + 2) % 6]:
                             nodeState = states.wall
+                
+                elif map == maps.yourComputerWillCrash:
+                    if (x, y) != (0, 0) or (y != self.pNum or x != self.pNum):
+                        if x % 4 == 0 and y == 0:
+                            nodeState = states.empty
+                        elif x % 2 == 0 and y <= x:
+                            nodeState = states.wall
+                        
+                        if (y + 2) % 4 == 0 and x == 0:
+                            nodeState = states.empty
+                        elif y % 2 == 0 and y > x:
+                            nodeState = states.wall
+
                     
                 self.nodes[-1].append(Node(startPos, (self.pWidth, self.pHeight), state=nodeState))
 
