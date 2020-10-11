@@ -1,20 +1,21 @@
-WIDTH = HEIGHT = 400
-PIXEL_NUM = 20
+WIDTH = HEIGHT = 800
+PIXEL_NUM = 80
 
 TITLE = "PATH FINDING"
 DRAW_GRID = False
-FPS = 120
+ANIMATIONS = 1
+FPS = 500
 MAP = 0
 
 class colors:
     red = (255, 0, 0)
     black = (0, 0, 0)
     blue = (0, 0, 255)
-    green = (0, 255, 0)
+    lime = (0, 255, 0)
     turq = (64, 224, 208)
     orange = (255, 69, 0)
     white = (255, 255, 255)
-    darkGreen = (0, 125, 0)
+    green = (34, 139, 34)
 
 class states:
     empty = 0
@@ -24,4 +25,5 @@ class states:
     
     old = 5
     new = 6
-    final = 7
+    lead= 7
+    final = 8

@@ -6,7 +6,8 @@ class Node:
         self.lScore = None
         self.hScore = None
         self.state = state
-
+        
+        self.prev = None
         self.rect = pygame.Rect(startPos, size)
 
     def calcHScore(self, nodePos, endNodePos):
@@ -42,8 +43,12 @@ class Node:
             return states.old
         
         # GELECEK
-        elif self.color == colors.green:
+        elif self.color == colors.lime:
             return states.new
+        
+        # ÖNDEKİ GELECEK
+        elif self.color == colors.green:
+            return states.lead
         
         # SONUÇ
         elif self.color == colors.orange:
@@ -78,8 +83,13 @@ class Node:
         
         # GELECEK
         elif value == states.new:
-            self.color = colors.green
+            self.color = colors.lime
             return states.new
+        
+        # ÖNDEKİ GELECEK
+        elif value == states.lead:
+            self.color = colors.green
+            return states.lead
         
         # SONUÇ
         elif value == states.final:

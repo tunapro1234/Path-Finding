@@ -3,7 +3,7 @@ from res.glob import *
 import pygame
 
 class Board:
-    def __init__(self, screen, size, pixel_num, draw_grid, map=0):
+    def __init__(self, screen, size, pixel_num, draw_grid, map=0, animations=1):
         self.pNum = pixel_num
         self.screen = screen
         self._drawGrid = draw_grid
@@ -17,6 +17,7 @@ class Board:
         self.startNodePos = None
         self.endNodePos = None
 
+        self.animations = animations
         self.__initNodes(map)
 
     def setNodeState(self, pos, state):
@@ -32,9 +33,21 @@ class Board:
 
         self.nodes[pos[0]][pos[1]].state = state
     
+    def setNodeHScore(self, pos, value):
+        self.nodes[pos[0]][pos[1]].hScore = value
+    
+    def setNodeLScore(self, pos, value):
+        self.nodes[pos[0]][pos[1]].lScore = value
+    
+    def setNodePrev(self, pos, prevPos):
+        self.nodes[pos[0]][pos[1]].prev = prevPos
+    
     def getNodeState(self, pos: tuple):
         if (0 <= pos[0] < self.pNum) and (0 <= pos[1] < self.pNum):
             return self.nodes[pos[0]][pos[1]].state
+                    
+    def getNodeScore(self, pos:tuple):
+        return self.nodes[pos[0]][pos[1]].getScore(pos, self.endNodePos)
 
     def __initNodes(self, map):
         self.nodes = []
@@ -96,7 +109,6 @@ class Board:
         currentNode = self.nodes[pos[0]][pos[1]]
         pygame.draw.rect(self.screen, currentNode.color, currentNode.rect)
 
-    
     def clearAlgorithm(self):
         for x in range(self.pNum):
             for y in range(self.pNum):
@@ -104,18 +116,15 @@ class Board:
                     self.setNodeState((x, y), states.empty)
                 self.setNodeLScore((x, y), None)
                 self.setNodeHScore((x, y), None)
-                    
-    def getNodeScore(self, pos:tuple):
-        return self.nodes[pos[0]][pos[1]].getScore(pos, self.endNodePos)
-    
-    def setNodeHScore(self, pos, value):
-        self.nodes[pos[0]][pos[1]].hScore = value
-    
-    def setNodeLScore(self, pos, value):
-        self.nodes[pos[0]][pos[1]].lScore = value
-    
+        
     def sortNodes(self, neighbourPositions):
         return neighbourPositions.sort(key=self.getNodeScore)
+    
+    def drawFinal(self):
+        p = self.nodes[self.endNodePos[0]][self.endNodePos[1]].prev
+        while p != self.startNodePos:
+            self.setNodeState(p, states.final)
+            p = self.nodes[p[0]][p[1]].prev
     
     def calcNeighbours(self, x, y):
         oldLScore = self.nodes[x][y].lScore
@@ -126,6 +135,7 @@ class Board:
         
         # yeni akraba pozisyonları
         neighbourPositions = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+        found = False
         
         # Boş blok filtresi
         newNeighbourPositions = []
@@ -133,13 +143,19 @@ class Board:
             if self.getNodeState(pos) == states.empty:
                 newNeighbourPositions.append(pos)
                 self.setNodeLScore(pos, oldLScore+1)
+                self.setNodePrev(pos, (x, y))
                 
                 # olabilen akrabalar yeni renklerine boyandı
                 self.setNodeState(pos, states.new)
-                
+            
+            elif self.getNodeState(pos) == states.end:
+                self.setNodePrev(pos, (x, y))
+                found = pos
         
-        # neighbourPositions = newNeighbourPositions
-        return newNeighbourPositions
+        if found:
+            return found, True
+        
+        return newNeighbourPositions, False
         
     def startAlgorithm(self, updateFunc):
         self.clearAlgorithm()
@@ -152,17 +168,29 @@ class Board:
         
         # start nodeunu ekledim
         currentNodePositions.append(self.startNodePos)
+        found = False
         
         while True:
-            self.sortNodes(currentNodePositions)
-            newNodes = self.calcNeighbours(*currentNodePositions[0])
-            del currentNodePositions[0]
+            if not found:
+                self.sortNodes(currentNodePositions)
+                newNodes, found = self.calcNeighbours(*currentNodePositions[0])
+                
+                if found:
+                    self.drawFinal()                    
+                
+                currentNodePositions += newNodes
+                del currentNodePositions[0]
+        
+            if (not self.animations and found) or self.animations:
+                if (rv := updateFunc()) != 1:
+                    break
             
-            currentNodePositions += newNodes
-            
-            if (rv := updateFunc()) != 1:
+            elif not len(currentNodePositions):
+                rv = 2
                 break
         
         
-        self.clearAlgorithm() if rv == 2 else None
+        if rv == 2:
+            self.clearAlgorithm()
+        
         return rv

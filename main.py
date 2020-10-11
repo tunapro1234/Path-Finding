@@ -13,7 +13,7 @@ def main():
     screen = pygame.display.set_mode(scrSize)
     
     board = Board(screen, (WIDTH, HEIGHT), PIXEL_NUM, 
-                  draw_grid=DRAW_GRID, map=MAP)
+                  draw_grid=DRAW_GRID, map=MAP, animations=ANIMATIONS)
     
     isAlgorithmStarted = False
 
