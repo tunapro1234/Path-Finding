@@ -3,7 +3,7 @@ PIXEL_NUM = 20
 
 TITLE = "PATH FINDING"
 DRAW_GRID = False
-FPS = 60
+FPS = 120
 MAP = 0
 
 class colors:

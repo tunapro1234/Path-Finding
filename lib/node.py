@@ -3,20 +3,22 @@ import pygame
 
 class Node:
     def __init__(self, startPos, size, state=0):
-        self.l_score = float("Infinity")
-        self.h_score = None
+        self.lScore = None
+        self.hScore = None
         self.state = state
 
         self.rect = pygame.Rect(startPos, size)
 
-    def calc_h_score(self, nodePos, endNodePos):
+    def calcHScore(self, nodePos, endNodePos):
         (xt, yt), (xe, ye) = nodePos, endNodePos
-        self.h_score = ((abs(xt)-abs(xe)) ** 2 + (abs(yt)-abs(ye)) ** 2) ** 0.5
+        return ((abs(xt)-abs(xe)) ** 2 + (abs(yt)-abs(ye)) ** 2) ** 0.5
     
-    @property
-    def score(self):
-        return self.l_score + self.h_score
-
+    def getScore(self, nodePos, endPos):
+        # print(f"H: {self.hScore}, L:{self.lScore}")
+        if self.hScore is None:
+            self.hScore = self.calcHScore(nodePos, endPos)
+        return self.lScore + self.hScore
+    
     @property
     def state(self):
         # BOŞ

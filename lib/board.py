@@ -102,19 +102,28 @@ class Board:
             for y in range(self.pNum):
                 if self.getNodeState((x, y)) in [states.new, states.final, states.old]:
                     self.setNodeState((x, y), states.empty)
+                self.setNodeLScore((x, y), None)
+                self.setNodeHScore((x, y), None)
+                    
+    def getNodeScore(self, pos:tuple):
+        return self.nodes[pos[0]][pos[1]].getScore(pos, self.endNodePos)
     
-    def getNodeHScore(self, pos:tuple):
-        return
-
-    def getNodeLScore(self, pos:tuple):
-        return
+    def setNodeHScore(self, pos, value):
+        self.nodes[pos[0]][pos[1]].hScore = value
+    
+    def setNodeLScore(self, pos, value):
+        self.nodes[pos[0]][pos[1]].lScore = value
     
     def sortNodes(self, neighbourPositions):
-        return neighbourPositions
+        return neighbourPositions.sort(key=self.getNodeScore)
     
     def calcNeighbours(self, x, y):
+        oldLScore = self.nodes[x][y].lScore
+        # print(oldLScore)
+        
         # eski bloğu eskittik (eğer başlangıç değilse)
         self.setNodeState((x, y), states.old) if self.getNodeState((x, y)) != states.start else None
+        
         # yeni akraba pozisyonları
         neighbourPositions = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
         
@@ -123,9 +132,11 @@ class Board:
         for pos in neighbourPositions:
             if self.getNodeState(pos) == states.empty:
                 newNeighbourPositions.append(pos)
+                self.setNodeLScore(pos, oldLScore+1)
                 
                 # olabilen akrabalar yeni renklerine boyandı
                 self.setNodeState(pos, states.new)
+                
         
         # neighbourPositions = newNeighbourPositions
         return newNeighbourPositions
@@ -133,11 +144,14 @@ class Board:
     def startAlgorithm(self, updateFunc):
         self.clearAlgorithm()
         
+        # Başlangıç bloğunu geçmişi temizlendi
+        self.nodes[self.startNodePos[0]][self.startNodePos[1]].lScore = 0
+        
         # node pointer vectorü
         currentNodePositions = []
         
-        # start nodeunun akrabalarını ekledim
-        currentNodePositions += self.calcNeighbours(*self.startNodePos)
+        # start nodeunu ekledim
+        currentNodePositions.append(self.startNodePos)
         
         while True:
             self.sortNodes(currentNodePositions)
