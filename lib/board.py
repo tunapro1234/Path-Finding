@@ -33,7 +33,8 @@ class Board:
         self.nodes[pos[0]][pos[1]].state = state
     
     def getNodeState(self, pos: tuple):
-        return self.nodes[pos[0]][pos[1]].state
+        if (0 <= pos[0] < self.pNum) and (0 <= pos[1] < self.pNum):
+            return self.nodes[pos[0]][pos[1]].state
 
     def __initNodes(self, map):
         self.nodes = []
@@ -82,7 +83,7 @@ class Board:
         return x, y
 
     def update(self):
-        print(f"S: {self.startNodePos}, E: {self.endNodePos}")
+        # print(f"S: {self.startNodePos}, E: {self.endNodePos}")
         
         for x in range(self.pNum):
             for y in range(self.pNum):
@@ -95,5 +96,59 @@ class Board:
         currentNode = self.nodes[pos[0]][pos[1]]
         pygame.draw.rect(self.screen, currentNode.color, currentNode.rect)
 
+    
+    def clearAlgorithm(self):
+        for x in range(self.pNum):
+            for y in range(self.pNum):
+                if self.getNodeState((x, y)) in [states.new, states.final, states.old]:
+                    self.setNodeState((x, y), states.empty)
+    
+    def getNodeHScore(self, pos:tuple):
+        return
+
+    def getNodeLScore(self, pos:tuple):
+        return
+    
+    def sortNodes(self, neighbourPositions):
+        return neighbourPositions
+    
+    def calcNeighbours(self, x, y):
+        # eski bloğu eskittik (eğer başlangıç değilse)
+        self.setNodeState((x, y), states.old) if self.getNodeState((x, y)) != states.start else None
+        # yeni akraba pozisyonları
+        neighbourPositions = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+        
+        # Boş blok filtresi
+        newNeighbourPositions = []
+        for pos in neighbourPositions:
+            if self.getNodeState(pos) == states.empty:
+                newNeighbourPositions.append(pos)
+                
+                # olabilen akrabalar yeni renklerine boyandı
+                self.setNodeState(pos, states.new)
+        
+        # neighbourPositions = newNeighbourPositions
+        return newNeighbourPositions
+        
     def startAlgorithm(self, updateFunc):
-        updateFunc()
+        self.clearAlgorithm()
+        
+        # node pointer vectorü
+        currentNodePositions = []
+        
+        # start nodeunun akrabalarını ekledim
+        currentNodePositions += self.calcNeighbours(*self.startNodePos)
+        
+        while True:
+            self.sortNodes(currentNodePositions)
+            newNodes = self.calcNeighbours(*currentNodePositions[0])
+            del currentNodePositions[0]
+            
+            currentNodePositions += newNodes
+            
+            if (rv := updateFunc()) != 1:
+                break
+        
+        
+        self.clearAlgorithm() if rv == 2 else None
+        return rv
